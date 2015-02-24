@@ -14,6 +14,7 @@ main([File]) ->
     RebarOpts = rebar_opts(Dir ++ "/" ++ RebarFile),
     code:add_patha(filename:absname("ebin")),
     compile:file(File, Defs ++ RebarOpts);
+
 main(_) ->
     io:format("Usage: ~s <file>~n", [escript:script_name()]),
     halt(1).
@@ -41,10 +42,32 @@ rebar_opts(RebarFile) ->
             IncludeDeps = {i, filename:join(Dir, RebarDepsDir)},
             proplists:get_value(erl_opts, Terms, []) ++ [IncludeDeps];
         {error, _} when RebarFile == "rebar.config" ->
-            [];
+          make_opts();
         {error, _} ->
             rebar_opts("rebar.config")
     end.
+
+make_opts() ->
+    ErlMk = filelib:is_file("erl.mk"),
+    ErlangMk = filelib:is_file("erlang.mk"),
+    if
+      ErlMk or ErlangMk ->
+        code:add_pathsa(filelib:wildcard("deps/*/ebin")),
+        code:add_pathsa(nested_app_ebins()),
+        [ { i, filename:absname("deps") }
+          | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
+        ];
+      true ->
+        []
+    end.
+
+nested_app_ebins() ->
+    DetectedAppSrcFiles = filelib:wildcard("deps/*/apps/**/*.app.src"),
+    [apps_dir_from_src(AppSrcFile)||AppSrcFile<-DetectedAppSrcFiles].
+
+apps_dir_from_src(SrcFile) ->
+    SrcDir = filename:dirname(SrcFile),
+    filename:join(SrcDir, "../../ebin").
 
 get_root(Dir) ->
     Path = filename:split(filename:absname(Dir)),
