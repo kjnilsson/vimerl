@@ -42,24 +42,17 @@ rebar_opts(RebarFile) ->
             IncludeDeps = {i, filename:join(Dir, RebarDepsDir)},
             proplists:get_value(erl_opts, Terms, []) ++ [IncludeDeps];
         {error, _} when RebarFile == "rebar.config" ->
-          make_opts();
+          fallback_opts();
         {error, _} ->
             rebar_opts("rebar.config")
     end.
 
-make_opts() ->
-    ErlMk = filelib:is_file("erl.mk"),
-    ErlangMk = filelib:is_file("erlang.mk"),
-    if
-      ErlMk or ErlangMk ->
-        code:add_pathsa(filelib:wildcard("deps/*/ebin")),
-        code:add_pathsa(nested_app_ebins()),
-        [ { i, filename:absname("deps") }
-          | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
-        ];
-      true ->
-        []
-    end.
+fallback_opts() ->
+    code:add_pathsa(filelib:wildcard("deps/*/ebin")),
+    code:add_pathsa(nested_app_ebins()),
+    [ { i, filename:absname("deps") }
+      | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
+    ].
 
 nested_app_ebins() ->
     DetectedAppSrcFiles = filelib:wildcard("deps/*/apps/**/*.app.src"),
