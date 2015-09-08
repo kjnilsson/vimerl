@@ -14,7 +14,11 @@ main([ModName]) ->
             code:add_pathsa(filelib:wildcard(RebarDepsDir ++ "/*/ebin")),
             code:add_pathsa(filelib:wildcard("_build/**/ebin"));
         {error, _} ->
-            true
+            code:add_pathsa(filelib:wildcard("deps/*/ebin")),
+            code:add_pathsa(nested_app_ebins()),
+            [ { i, filename:absname("deps") }
+              | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
+            ]
     end,
     code:add_patha("ebin"),
     Mod = list_to_atom(ModName),
@@ -39,6 +43,14 @@ main([ModName]) ->
 main(_) ->
     io:format("Usage: ~s <module>~n", [escript:script_name()]),
     halt(1).
+
+nested_app_ebins() ->
+    DetectedAppSrcFiles = filelib:wildcard("deps/*/apps/**/*.app.src"),
+    [apps_dir_from_src(AppSrcFile)||AppSrcFile<-DetectedAppSrcFiles].
+
+apps_dir_from_src(SrcFile) ->
+    SrcDir = filename:dirname(SrcFile),
+    filename:join(SrcDir, "../../ebin").
 
 module_edoc(Mod) ->
     File = case filename:find_src(Mod) of
