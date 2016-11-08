@@ -15,10 +15,12 @@ main([ModName]) ->
             code:add_pathsa(filelib:wildcard("_build/**/ebin"));
         {error, _} ->
             code:add_pathsa(filelib:wildcard("deps/*/ebin")),
-            code:add_pathsa(nested_app_ebins()),
-            [ { i, filename:absname("deps") }
-              | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
-            ]
+            % Plugins = [ filename:join([X, filename:basename(X, ".ez"), "ebin"]) || X <- filelib:wildcard("plugins/*.ez")], 
+            code:add_pathsa(filelib:wildcard("../*/ebin")),
+            code:add_pathsa(nested_app_ebins())
+            % [ { i, filename:absname("deps") }
+            %   | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
+            % ]
     end,
     code:add_patha("ebin"),
     Mod = list_to_atom(ModName),
@@ -54,23 +56,23 @@ apps_dir_from_src(SrcFile) ->
 
 module_edoc(Mod) ->
     File = case filename:find_src(Mod) of
-        {error, _} ->
-            BeamFile = atom_to_list(Mod) ++ ".beam",
-            case code:where_is_file(BeamFile) of
-                non_existing ->
-                    throw(not_found);
-                BeamPath ->
-                    SrcPath = beam_to_src_path(BeamPath),
-                    case filelib:is_regular(SrcPath) of
-                        true ->
-                            SrcPath;
-                        false ->
-                            throw(not_found)
-                    end
-            end;
-        {File0, _} ->
-            File0 ++ ".erl"
-    end,
+                {error, _} ->
+                    BeamFile = atom_to_list(Mod) ++ ".beam",
+                    case code:where_is_file(BeamFile) of
+                        non_existing ->
+                            throw(not_found);
+                        BeamPath ->
+                            SrcPath = beam_to_src_path(BeamPath),
+                            case filelib:is_regular(SrcPath) of
+                                true ->
+                                    SrcPath;
+                                false ->
+                                    throw(not_found)
+                            end
+                    end;
+                {File0, _} ->
+                    File0 ++ ".erl"
+           end,
     {_, Doc} = edoc:get_doc(File),
     Funs = xmerl_xpath:string("/module/functions/function", Doc),
     FunSpecs = map_functions(fun(Fun) -> analyze_function(Fun) end, Funs),

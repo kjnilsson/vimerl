@@ -2,17 +2,24 @@
 
 main([File]) ->
     Dir = get_root(filename:dirname(File)),
+    Includes = filelib:wildcard("../*/include"),
+    Is = [{i, I} || I <- Includes],
     Defs = [strong_validation,
-            warn_export_all,
+            % warn_export_all,
             warn_export_vars,
             warn_shadow_vars,
             warn_obsolete_guard,
             warn_unused_import,
             report,
-            {i, Dir ++ "/include"}],
+            {i, Dir ++ "/include"},
+            {i, ".."}] ++ Is,
     RebarFile = rebar_file(Dir),
     RebarOpts = rebar_opts(Dir ++ "/" ++ RebarFile),
-    code:add_patha(filename:absname("ebin")),
+    % code:add_patha(filename:absname("ebin")),
+    % Plugins = [ filename:join([X, filename:basename(X, ".ez"), "ebin"]) || X <- Ezs ],
+    code:add_pathsa(filelib:wildcard("../*/ebin")),
+    % code:add_patha(".."),
+    % code:add_pathsa(filelib:wildcard("plugins/*.ez")),
     compile:file(File, Defs ++ RebarOpts);
 
 main(_) ->
@@ -50,6 +57,7 @@ rebar_opts(RebarFile) ->
 
 fallback_opts() ->
     code:add_pathsa(filelib:wildcard("deps/*/ebin")),
+    code:add_pathsa(filelib:wildcard("plugins")),
     code:add_pathsa(nested_app_ebins()),
     [
      { i, filename:absname("apps") }, { i, filename:absname("deps") } | [ { i, filename:absname(Path) } || Path <- filelib:wildcard("deps/*/apps")]
