@@ -1,18 +1,21 @@
 #!/usr/bin/env escript
 
+-define(TEST, true).
+
 main([File]) ->
     Dir = get_root(filename:dirname(File)),
     Includes = filelib:wildcard("../*/include"),
     Is = [{i, I} || I <- Includes],
     Defs = [strong_validation,
-            % warn_export_all,
+            nowarn_export_all,
             warn_export_vars,
             warn_shadow_vars,
             warn_obsolete_guard,
             warn_unused_import,
             report,
             {i, Dir ++ "/include"},
-            {i, ".."}] ++ Is,
+            {i, ".."},
+            {d, 'TEST'}] ++ Is,
     RebarFile = rebar_file(Dir),
     RebarOpts = rebar_opts(Dir ++ "/" ++ RebarFile),
     % code:add_patha(filename:absname("ebin")),
