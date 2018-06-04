@@ -3,9 +3,13 @@
 -export([
          ]).
 
--export_type([
-              ]).
+-record(state, {}).
 
+-opaque state() :: #state{}.
+
+-export_type([
+              state/0
+              ]).
 
 
 
