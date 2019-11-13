@@ -3,17 +3,16 @@
 -export([
          ]).
 
--record(state, {}).
+%% holds static or rarely changing fields
+-record(cfg, {}).
 
--opaque state() :: #state{}.
+-record(?MODULE, {cfg :: #cfg{}}).
+
+-opaque state() :: #?MODULE{}.
 
 -export_type([
               state/0
               ]).
-
-
-
-
 
 
 -ifdef(TEST).
